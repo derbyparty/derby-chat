@@ -7,6 +7,7 @@ MongoStore = require('connect-mongo')(express)
 app = require '../app'
 hooks = require './hooks'
 error = require './error'
+version = require('../../package.json').version
 
 expressApp = module.exports = express()
 
@@ -37,6 +38,7 @@ createUserId = (req, res, next) ->
   model = req.getModel()
   userId = req.session.userId ||= model.id()
   model.set '_session.userId', userId
+  model.set '_session.version', version
   next()
 
 publicPath = pathJoin __dirname, '../../public'
