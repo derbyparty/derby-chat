@@ -58,6 +58,10 @@
           </p>
         {/}
       </div>
+      <p>
+        You are writing to: 
+        <span style="color: {color(_page.threadId)}"> {writing(_page.threadId, _page.answerMessageId)}</span>
+      </p>
       <textarea id="enter" class="input-xxlarge" x-bind="keydown: message.add">{_page.text}</textarea>
       {#if _page.answerMessageId}
         <a class="btn" x-bind="click: thread.reset">Reset</a>

@@ -100,7 +100,7 @@ app.fn 'thread.reset', (e, el) ->
 
 app.view.fn 'color', (threadId) ->
   thread = @model.get 'threads.' + threadId
-  thread?.color or 'white'
+  thread?.color or 'black'
 
 app.view.fn 'name', (userId) ->
   name = @model.get 'users.' + userId + '.name'
@@ -113,3 +113,18 @@ app.view.fn 'thread', (threadId) ->
       return thread.name.substr(0, 19) + '..'
     return thread.name
   ''
+
+app.view.fn 'writing', (threadId, answerMessageId) ->
+  if answerMessageId
+    message = @model.get 'messages.' + answerMessageId
+    if message.threadId
+      threadId = message.threadId
+    else
+      return 'New Discussion from message: ' + message.text
+
+  if threadId
+    thread = @model.get 'threads.' + threadId
+    if thread
+      return thread.name
+
+  'General Chat'
