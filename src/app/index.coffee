@@ -88,11 +88,15 @@ app.fn 'thread.save', (e, el) ->
 app.fn 'thread.all', (e, el) ->
   filterMessages @model
   @model.del '_page.threadId'
+  focusEnter()
+  scrollDown()
 
 app.fn 'thread.select', (e, el) ->
   threadId = el.getAttribute 'data-id'
   filterMessages @model, threadId
   @model.set '_page.threadId', threadId
+  focusEnter()
+  scrollDown()
 
 app.fn 'thread.reset', (e, el) ->
   @model.del '_page.answerMessageId'
