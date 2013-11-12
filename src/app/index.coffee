@@ -44,31 +44,32 @@ app.enter '/', (model) ->
 
 app.fn 'message.add', (e, el) ->
   if e.keyCode is 13
-
     e.preventDefault()
+    text = @model.del '_page.text'
 
-    message =
-      text: @model.del '_page.text'
-      userId: @model.get '_session.userId'
+    if text
+      message =
+        text: text
+        userId: @model.get '_session.userId'
 
-    threadId = @model.get '_page.threadId'
-    if not threadId
-      answerMessageId = @model.get '_page.answerMessageId'
-      if answerMessageId
-        answerMessage = @model.get 'messages.' + answerMessageId
-        if answerMessage.threadId
-          threadId = answerMessage.threadId
-        else
-          thread =
-            name: answerMessage.text
-            color: '#'+(0x1000000+(Math.random())*0xffffff).toString(16).substr(1,6)
+      threadId = @model.get '_page.threadId'
+      if not threadId
+        answerMessageId = @model.get '_page.answerMessageId'
+        if answerMessageId
+          answerMessage = @model.get 'messages.' + answerMessageId
+          if answerMessage.threadId
+            threadId = answerMessage.threadId
+          else
+            thread =
+              name: answerMessage.text
+              color: '#'+(0x1000000+(Math.random())*0xffffff).toString(16).substr(1,6)
 
-          threadId = @model.add 'threads', thread
-          @model.set 'messages.' + answerMessageId + '.threadId', threadId
+            threadId = @model.add 'threads', thread
+            @model.set 'messages.' + answerMessageId + '.threadId', threadId
 
-    message.threadId = threadId
-    @model.add 'messages', message
-    @model.del '_page.answerMessageId'
+      message.threadId = threadId
+      @model.add 'messages', message
+      @model.del '_page.answerMessageId'
 
 
 app.fn 'thread.add', (e, el) ->
