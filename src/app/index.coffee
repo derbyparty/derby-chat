@@ -3,6 +3,8 @@ moment = require 'moment'
 app = derby.createApp(module)
   .use(require '../../ui')
 
+favicon = null
+
 focusEnter = ->
   el = document.getElementById 'enter'
   el.focus()
@@ -35,10 +37,22 @@ app.get '/', (page, model) ->
     page.render()
 
 app.enter '/', (model) ->
+  isActive = true
+  badge = 0
+  window.onfocus = ->
+    isActive = true
+    badge = 0
+    favicon.reset()
+  window.onblur = ->
+    isActive = false
   focusEnter()
   scrollDown()
-  model.on 'all', 'messages**', ->
+  model.on 'change', 'messages**', ->
     scrollDown()
+    if not isActive
+      badge++
+      favicon.badge badge
+  favicon = new Favico {animation: 'popFade'}
 
 
 app.fn 'message.add', (e, el) ->
