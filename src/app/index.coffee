@@ -1,7 +1,6 @@
 derby = require 'derby'
 moment = require 'moment'
 app = derby.createApp(module)
-  .use(require 'derby-ui-boot')
   .use(require '../../ui')
 
 focusEnter = ->
