@@ -18,7 +18,7 @@
 
     <div class="container">
       <div class="row">
-        <div class="col-md-2 column" id="threads">
+        <div class="column" id="threads">
           <p><a x-bind="click: thread.all">All</a>
           {#each _page.threads as :thread}
             <p>
@@ -32,7 +32,7 @@
             </p>
           {/}
         </div>
-        <div class="col-md-8 column" id="chat">
+        <div class="column" id="chat">
           {#each _page.messages as :message}
             <p x-bind="click: thread.add">
               <span class="col-md-3 muted"><ui:date value={:message.date}></span>
@@ -47,7 +47,7 @@
             </p>
           {/}
         </div>
-        <div class="col-md-2 column" id="users">
+        <div class="column" id="users">
           {#each _page.users as :user}
             <p>{name(:user.id, :user.name)}</p>
           {/}
