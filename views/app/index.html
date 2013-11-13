@@ -26,9 +26,9 @@
               <a style="color: {:thread.color}" x-bind="click: thread.select" data-id="{{:thread.id}}">{:thread.name}</a>
               {#if equal(:thread.id, _page.editThreadId)}
                 <input type="text" value="{:thread.name}"/>
-                <a x-bind="click: thread.save"><i class="icon-ok"></i></a>
+                <a x-bind="click: thread.save"> <span class="glyphicon glyphicon-ok"></span></a>
               {else}
-                <a x-bind="click: thread.edit" data-id="{:thread.id}"><i class="icon-edit"></i></a>
+                <a x-bind="click: thread.edit" data-id="{:thread.id}"> <span class="glyphicon glyphicon-edit"></span></a>
               {/}
             </p>
           {/}
