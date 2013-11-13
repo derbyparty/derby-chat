@@ -36,8 +36,9 @@
         <div class="column" id="chat">
           {#each _page.messages as :message}
             <p x-bind="click: thread.add">
-              <span class="col-md-3 muted"><ui:date value={:message.date}></span>
-              <strong>{name(:message.userId)}:</strong> {:message.text}
+              <span class="text-muted"><ui:date value={:message.date}> </span>
+              <span class="text-primary">{name(:message.userId)}: </span>
+              <span>{:message.text}</span>
               {#if :message.threadId}
                 <span style="color: {color(:message.threadId)}">({thread(:message.threadId)})</span>
               {/}
