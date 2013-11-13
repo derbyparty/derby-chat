@@ -13,13 +13,18 @@ scrollDown = ->
   el = document.getElementById 'chat'
   el.scrollTop = el.scrollHeight
 
-filterMessages = (model, threadId) ->
+showMessages = (model, threadId) ->
+  filterFn = null
   if threadId
     filterFn = (message) ->
       message.threadId is threadId
-    model.filter('messages', filterFn).ref '_page.messages'
   else
-    model.filter('messages').ref '_page.messages'
+    filterFn = (message) ->
+      message.isBase or not message.threadId
+  model.set '_page.threadId', threadId
+  model.filter('messages', filterFn).ref '_page.messages'
+  focusEnter()
+  scrollDown()
 
 app.get '/', (page, model) ->
   userId = model.get '_session.userId'
@@ -33,7 +38,6 @@ app.get '/', (page, model) ->
     if not model.get '_page.user.id'
       model.set '_page.user.id', userId
     model.filter('users').ref '_page.users'
-    filterMessages model
     page.render()
 
 app.enter '/', (model) ->
@@ -45,8 +49,7 @@ app.enter '/', (model) ->
     favicon.reset()
   window.onblur = ->
     isActive = false
-  focusEnter()
-  scrollDown()
+  showMessages model
   model.on 'change', 'messages**', ->
     scrollDown()
     if not isActive
@@ -79,6 +82,7 @@ app.fn 'message.add', (e, el) ->
 
             threadId = @model.add 'threads', thread
             @model.set 'messages.' + answerMessageId + '.threadId', threadId
+            @model.set 'messages.' + answerMessageId + '.isBase', true
 
       message.threadId = threadId
       @model.add 'messages', message
@@ -99,18 +103,12 @@ app.fn 'thread.edit', (e, el) ->
 app.fn 'thread.save', (e, el) ->
   @model.del '_page.editThreadId'
 
-app.fn 'thread.all', (e, el) ->
-  filterMessages @model
-  @model.del '_page.threadId'
-  focusEnter()
-  scrollDown()
+app.fn 'thread.general', (e, el) ->
+  showMessages @model
 
 app.fn 'thread.select', (e, el) ->
   threadId = el.getAttribute 'data-id'
-  filterMessages @model, threadId
-  @model.set '_page.threadId', threadId
-  focusEnter()
-  scrollDown()
+  showMessages @model, threadId
 
 app.fn 'thread.reset', (e, el) ->
   @model.del '_page.answerMessageId'

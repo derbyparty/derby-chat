@@ -20,7 +20,7 @@
     <div class="container">
       <div class="row">
         <div class="column" id="threads">
-          <p><a x-bind="click: thread.all">All</a>
+          <p><a x-bind="click: thread.general">General Chat</a>
           {#each _page.threads as :thread}
             <p>
               <a style="color: {:thread.color}" x-bind="click: thread.select" data-id="{{:thread.id}}">{:thread.name}</a>
@@ -40,7 +40,9 @@
               <span class="text-primary">{name(:message.userId)}: </span>
               <span>{:message.text}</span>
               {#if :message.threadId}
-                <span style="color: {color(:message.threadId)}">({thread(:message.threadId)})</span>
+                <a x-bind="click: thread.select" data-id="{{:message.threadId}}">
+                  <span style="color: {color(:message.threadId)}">({thread(:message.threadId)})</span>
+                </a>
               {/}
               {#if equal(:message.id, _page.answerMessageId)}
                 <span class="label label-info">Answer!</span>
