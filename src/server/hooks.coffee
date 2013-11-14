@@ -71,14 +71,21 @@ module.exports =
 
 
     #make a hook
-    store.hook 'create', 'messages', (docId, value, session, backend) ->
+    store.hook 'create', 'messages', (docId, message, session, backend) ->
       model = store.createModel()
 
       model.fetch 'messages.' + docId, (err) ->
-        model.set 'messages.' + docId + '.date', new Date()
+        model.set 'messages.' + docId + '.date', +new Date()
+        threadId = message.baseId or message.threadId
 
-    store.hook 'create', 'threads', (docId, value, session, backend) ->
+        if threadId
+          model.fetch 'threads.' + threadId, (err) ->
+            model.set 'threads.' + threadId + '.lastMessageDate', +new Date()
+            model.increment 'threads.' + threadId + '.messageCount'
+
+
+    store.hook 'create', 'threads', (docId, thread, session, backend) ->
       model = store.createModel()
 
       model.fetch 'threads.' + docId, (err) ->
-        model.set 'threads.' + docId + '.date', new Date()
+        model.set 'threads.' + docId + '.date', +new Date()

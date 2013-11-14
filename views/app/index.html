@@ -19,39 +19,43 @@
 
     <div class="container">
       <div class="row">
-        <div class="column" id="threads">
-          <p><a x-bind="click: thread.general">General Chat</a>
-          {#each _page.threads as :thread}
-            <p>
-              <a style="color: {:thread.color}" x-bind="click: thread.select" data-id="{{:thread.id}}">{:thread.name}</a>
-              {#if equal(:thread.id, _page.editThreadId)}
-                <input type="text" value="{:thread.name}"/>
-                <a x-bind="click: thread.save"> <span class="glyphicon glyphicon-ok"></span></a>
-              {else}
-                <a x-bind="click: thread.edit" data-id="{:thread.id}"> <span class="glyphicon glyphicon-edit"></span></a>
-              {/}
-            </p>
-          {/}
-        </div>
-        <div class="column" id="chat">
-          {#each _page.messages as :message}
-            <p x-bind="click: thread.add">
-              <span class="text-muted"><ui:date value={:message.date}> </span>
-              <span class="text-primary">{name(:message.userId)}: </span>
-              <span>{:message.text}</span>
-              {#if :message.threadId}
-                <a x-bind="click: thread.select" data-id="{{:message.threadId}}">
-                  <span style="color: {color(:message.threadId)}">({thread(:message.threadId)})</span>
+        <div class="left column" id="threads">
+          <ul class="nav nav-pills nav-stacked">
+            <li class="{#unless _page.threadId}active{/}"><a href="/">General Chat</a></li>
+            {#each _page.threads as :thread}
+              <li class="{#if equal(_page.threadId, :thread.id)}active{/}">
+                <a href="/threads/{{:thread.id}}">
+                  {:thread.name} <span class="badge pull-right">{:thread.messageCount}</span>
                 </a>
-              {/}
-              {#if equal(:message.id, _page.answerMessageId)}
-                <span class="label label-info">Answer!</span>
-              {/}
-
-            </p>
+              </li>
+            {/}
+          </ul>
+        </div>
+        <div class="center column" id="chat">
+          {#each _page.messages as :message}
+            <div class="message {#if equal(:message.id, _page.answerMessageId)}answer{/}">
+              <div class="message-header">
+                <span class="text-muted"><ui:date value={:message.date}> </span>
+                {#if :message.baseId}
+                  <a href="/threads/{{:message.baseId}}">
+                    <span class="badge">
+                      <ui:path path1="threads." path2={:message.baseId} path3=".messageCount">
+                    </span>
+                  </a>
+                {else}
+                  <a x-bind="click: thread.add" data-id="{{:message.id}}">
+                    <span class="glyphicon glyphicon-comment"></span>
+                  </a>
+                {/}
+                <span class="text-primary"> {shortName(:message.userId)} </span>
+              </div>
+              <div class="message-text">
+                {:message.text}
+              </div>
+            </div>
           {/}
         </div>
-        <div class="column" id="users">
+        <div class="right column" id="users">
           {#each _page.users as :user}
             <p>{name(:user.id, :user.name)}</p>
           {/}
@@ -60,23 +64,35 @@
     </div>
 
     <footer>
-      <div class="container">
-        <div class="row">
-          <div class="col-md-2">
+      <div class="left">
+      </div>
+      <div class="center">
+        <div class="enter-container">
+          <div class="enter-header">
           </div>
-          <div class="col-md-8">
-            <p>
-              You are writing to: 
-              <span style="color: {color(_page.threadId)}"> {writing(_page.threadId, _page.answerMessageId)}</span>
+          <div class="enter">
+            <p class="text-muted">
               {#if _page.answerMessageId}
-                <a class="btn" x-bind="click: thread.reset">Reset</a>
+                Start discussion
+                &nbsp;
+                <input type="text" placeholder="Thread Name" value={_page.threadName} />
+                &nbsp;
+                <button type="button" class="btn btn-default btn-sm" x-bind="click: thread.cancel">Cancel</button>
+              {else}
+                  To
+                  &nbsp;
+                  {#if _page.threadId}
+                    <input type="text" id="threadName" placeholder="Thread Name" value={_page.thread.name} />
+                  {else}
+                    General Chat
+                {/}
               {/}
             </p>
             <textarea id="enter" class="form-control" x-bind="keydown: message.add">{_page.text}</textarea>
           </div>
-          <div class="col-md-2">
-          </div>
         </div>
+      </div>
+      <div class="right">
       </div>
     </footer>
 

@@ -3,8 +3,6 @@ moment = require 'moment'
 app = derby.createApp(module)
   .use(require '../../ui')
 
-favicon = null
-
 focusEnter = ->
   el = document.getElementById 'enter'
   el.focus()
@@ -13,34 +11,57 @@ scrollDown = ->
   el = document.getElementById 'chat'
   el.scrollTop = el.scrollHeight
 
-showMessages = (model, threadId) ->
-  filterFn = null
-  if threadId
-    filterFn = (message) ->
-      message.threadId is threadId
-  else
-    filterFn = (message) ->
-      message.isBase or not message.threadId
-  model.set '_page.threadId', threadId
-  model.filter('messages', filterFn).ref '_page.messages'
-  focusEnter()
-  scrollDown()
+app.get '*', (page, model, params, next) ->
+  threadQuery = model.query 'threads',
+    $orderby: {lastMessageDate: -1}
 
-app.get '/', (page, model) ->
-  userId = model.get '_session.userId'
-  user = model.at 'users.' + userId
-
-  model.subscribe 'threads', 'users', 'messages', (err) ->
+  model.subscribe 'threads', 'users', (err) ->
     return next(err) if err
 
-    model.filter('threads').ref '_page.threads'
-    model.ref '_page.user', user
+    userId = model.get '_session.userId'
+    model.ref '_page.user', 'users.' + userId
     if not model.get '_page.user.id'
       model.set '_page.user.id', userId
     model.filter('users').ref '_page.users'
+    next()
+
+app.get '/', (page, model, params, next) ->
+  messageQuery = model.query 'messages',
+    threadId: null
+    $orderby: {date: 1}
+
+  model.subscribe messageQuery, (err) ->
+    return next(err) if err
+
+    messageQuery.ref '_page.messages'
     page.render()
 
-app.enter '/', (model) ->
+app.get '/threads/:id', (page, model, params, next) ->
+  threadId = params.id
+  messageQuery = model.query 'messages',
+    $or: [{threadId: threadId}, {baseId: threadId}]
+    $orderby: {date: 1}
+
+  model.subscribe messageQuery, (err) ->
+    return next(err) if err
+
+    messageQuery.ref '_page.messages'
+    model.set '_page.threadId', threadId
+    model.ref '_page.thread', 'threads.' + threadId
+    page.render()
+
+app.enter '*', (model) ->
+  focusEnter()
+  scrollDown()
+  model.on 'insert', '_page.messages', ->
+    scrollDown()
+
+  sortFn = (a, b) ->
+    b.lastMessageDate - a.lastMessageDate
+  model.sort('threads', sortFn).ref '_page.threads'
+
+app.ready (model) ->
+  favicon = new Favico {animation: 'popFade'}
   isActive = true
   badge = 0
   window.onfocus = ->
@@ -49,77 +70,77 @@ app.enter '/', (model) ->
     favicon.reset()
   window.onblur = ->
     isActive = false
-  showMessages model
-  model.on 'change', 'messages**', ->
-    scrollDown()
+
+  incrementBange = ->
     if not isActive
       badge++
       favicon.badge badge
-  favicon = new Favico {animation: 'popFade'}
+  
+  model.on 'load', 'messages.*', ->
+    incrementBange()
+  model.on 'change', 'threads.*.messageCount', ->
+    incrementBange()
+  #model.on 'all', '**', ->
+  #  console.log arguments
 
 
 app.fn 'message.add', (e, el) ->
+  model = @model
   if e.keyCode is 13
     e.preventDefault()
-    text = @model.del '_page.text'
+    text = model.del '_page.text'
 
     if text
       message =
+        date: 9999999999999
         text: text
-        userId: @model.get '_session.userId'
+        userId: model.get '_session.userId'
 
-      threadId = @model.get '_page.threadId'
-      if not threadId
-        answerMessageId = @model.get '_page.answerMessageId'
-        if answerMessageId
-          answerMessage = @model.get 'messages.' + answerMessageId
-          if answerMessage.threadId
-            threadId = answerMessage.threadId
-          else
-            thread =
-              name: answerMessage.text
-              color: '#'+(0x1000000+(Math.random())*0xffffff).toString(16).substr(1,6)
+      threadId = model.get '_page.threadId'
+      answerMessageId = model.del '_page.answerMessageId'
+      if answerMessageId
+        $answerMessage = model.at 'messages.' + answerMessageId
 
-            threadId = @model.add 'threads', thread
-            @model.set 'messages.' + answerMessageId + '.threadId', threadId
-            @model.set 'messages.' + answerMessageId + '.isBase', true
+        thread =
+          name: model.get '_page.threadName'
+          color: '#'+(0x1000000+(Math.random())*0xffffff).toString(16).substr(1,6)
+          messageCount: 1
 
-      message.threadId = threadId
-      @model.add 'messages', message
-      @model.del '_page.answerMessageId'
+        threadId = model.add 'threads', thread, (err) ->
+          model.set 'messages.' + answerMessageId + '.baseId', threadId
+          message.threadId = threadId
+          model.add 'messages', message
+      else
+        message.threadId = threadId
+        model.add 'messages', message
 
 
 app.fn 'thread.add', (e, el) ->
-  message = @model.at(el).get()
-
-  @model.set '_page.answerMessageId', message.id
-
+  messageId = el.getAttribute 'data-id'
+  text = @model.get 'messages.' + messageId + '.text'
+  @model.set '_page.threadName', text
+  @model.set '_page.answerMessageId', messageId
   focusEnter()
 
-app.fn 'thread.edit', (e, el) ->
-  threadId = el.getAttribute 'data-id'
-  @model.set '_page.editThreadId', threadId
-
-app.fn 'thread.save', (e, el) ->
-  @model.del '_page.editThreadId'
-
-app.fn 'thread.general', (e, el) ->
-  showMessages @model
-
-app.fn 'thread.select', (e, el) ->
-  threadId = el.getAttribute 'data-id'
-  showMessages @model, threadId
-
-app.fn 'thread.reset', (e, el) ->
+app.fn 'thread.cancel', (e, el) ->
   @model.del '_page.answerMessageId'
 
 app.view.fn 'color', (threadId) ->
   thread = @model.get 'threads.' + threadId
   thread?.color or 'black'
 
-app.view.fn 'name', (userId) ->
-  name = @model.get 'users.' + userId + '.name'
+getUserName = (model, userId) ->
+  name = model.get 'users.' + userId + '.name'
   name or 'Anonymous'
+
+app.view.fn 'name', (userId) ->
+  getUserName @model, userId
+
+app.view.fn 'shortName', (userId) ->
+  name = getUserName @model, userId
+  if name.length > 10
+    name = name.substr(0, 9) + '..'
+  name
 
 app.view.fn 'thread', (threadId) ->
   thread = @model.get 'threads.' + threadId
@@ -128,18 +149,3 @@ app.view.fn 'thread', (threadId) ->
       return thread.name.substr(0, 19) + '..'
     return thread.name
   ''
-
-app.view.fn 'writing', (threadId, answerMessageId) ->
-  if answerMessageId
-    message = @model.get 'messages.' + answerMessageId
-    if message.threadId
-      threadId = message.threadId
-    else
-      return 'New Discussion from message: ' + message.text
-
-  if threadId
-    thread = @model.get 'threads.' + threadId
-    if thread
-      return thread.name
-
-  'General Chat'
