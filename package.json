@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "derby": "0.5.x",
+    "racer": "git://github.com/codeparty/racer#master",
     "express": "~3.2.5",
     "redis": "~0.8.3",
     "livedb-mongo": "~0.2.0",

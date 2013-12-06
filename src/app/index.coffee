@@ -42,8 +42,10 @@ app.get '/threads/:id', (page, model, params, next) ->
     $or: [{threadId: threadId}, {baseId: threadId}]
     $orderby: {date: 1}
 
+  console.log 'sub start ' + model.get 'threads.' + threadId + '.name'
   model.subscribe messageQuery, (err) ->
     return next(err) if err
+    console.log 'sub end ' + model.get 'threads.' + threadId + '.name'
 
     messageQuery.ref '_page.messages'
     model.set '_page.threadId', threadId
