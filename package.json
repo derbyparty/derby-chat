@@ -11,7 +11,7 @@
     "racer": "git://github.com/codeparty/racer#master",
     "express": "~3.2.5",
     "redis": "~0.8.3",
-    "livedb-mongo": "~0.2.0",
+    "livedb-mongo": "~0.3.0",
     "racer-browserchannel": "~0.1.0",
     "connect-mongo": "~0.3.2",
     "moment": "*"
